@@ -31,19 +31,23 @@ export function descargar(datos: Datos) {
 
 export class ArchivoInvalido extends Error {}
 
-/** Lee un archivo elegido por el usuario. Lanza `ArchivoInvalido` con un
+/** Lee el JSON pegado o leído de un archivo. Lanza `ArchivoInvalido` con un
     mensaje que se puede enseñar tal cual: aquí el error no es un fallo del
-    programa, es que le pasaron el archivo equivocado. */
-export async function leerArchivo(archivo: File): Promise<Datos> {
+    programa, es que le pasaron el texto equivocado. */
+export function leerTexto(texto: string): Datos {
   let crudo: unknown
   try {
-    crudo = JSON.parse(await archivo.text())
+    crudo = JSON.parse(texto)
   } catch {
-    throw new ArchivoInvalido('Ese archivo no es un JSON válido.')
+    throw new ArchivoInvalido('Eso no es un JSON válido.')
   }
   const datos = leerDatos(crudo)
   if (!datos) {
-    throw new ArchivoInvalido('El archivo es JSON, pero no tiene la forma que esta app guarda.')
+    throw new ArchivoInvalido('Es JSON, pero no tiene la forma que esta app guarda.')
   }
   return datos
+}
+
+export async function leerArchivo(archivo: File): Promise<Datos> {
+  return leerTexto(await archivo.text())
 }

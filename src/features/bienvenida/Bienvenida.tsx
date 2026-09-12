@@ -13,6 +13,7 @@ import LockRounded from '@mui/icons-material/LockRounded'
 
 import { CampoDinero } from '../../shared/ui/CamposNumericos'
 import { BotonCargarArchivo } from '../../shared/ui/BotonCargarArchivo'
+import { BotonPegarJson } from '../../shared/ui/BotonPegarJson'
 import { useAlmacen } from '../../shared/almacen/Almacen'
 import type { FrecuenciaIngreso } from '../../shared/almacen/datos'
 import { DATOS_VACIOS } from '../../shared/almacen/datos'
@@ -85,8 +86,11 @@ export function Bienvenida() {
 
           <Divider sx={{ my: 3 }}>o</Divider>
 
-          <BotonCargarArchivo texto="Cargar mi JSON" ancho
-            alCargar={reemplazar} alFallar={setError} />
+          <Stack spacing={0.5}>
+            <BotonCargarArchivo texto="Cargar mi JSON" ancho
+              alCargar={reemplazar} alFallar={setError} />
+            <BotonPegarJson ancho alCargar={reemplazar} />
+          </Stack>
           {error && <Alert severity="error" sx={{ mt: 2, borderRadius: 3 }}>{error}</Alert>}
         </CardContent>
       </Card>

@@ -27,6 +27,7 @@ import { DIAS_SEMANA } from '../../shared/finanzas/fechas'
 import { Rejilla } from '../../shared/ui/Rejilla'
 import { descargar } from '../../shared/almacen/archivo'
 import { BotonCargarArchivo } from '../../shared/ui/BotonCargarArchivo'
+import { BotonPegarJson } from '../../shared/ui/BotonPegarJson'
 import { alCambiarInstalacion, estaInstalada, instalar, sePuedeInstalar } from '../../app/pwa'
 
 const FRECUENCIAS: { valor: FrecuenciaIngreso; texto: string }[] = [
@@ -121,6 +122,9 @@ export default function PantallaAjustes() {
               <BotonCargarArchivo
                 alCargar={(d) => { reemplazar(d); setAviso({ tipo: 'success', texto: 'Listo, tus datos se cargaron.' }) }}
                 alFallar={(texto) => setAviso({ tipo: 'error', texto })}
+              />
+              <BotonPegarJson
+                alCargar={(d) => { reemplazar(d); setAviso({ tipo: 'success', texto: 'Listo, tus datos se cargaron.' }) }}
               />
             </Stack>
 

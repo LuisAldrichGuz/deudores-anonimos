@@ -26,7 +26,11 @@ export function BotonCargarArchivo({
         {texto}
       </Button>
       <input
-        ref={entrada} type="file" accept="application/json,.json" hidden
+        ref={entrada} type="file" hidden
+        // ⚠️ Sin `accept`. Con "application/json" muchos gestores de archivos de
+        // Android ESCONDEN los .json —les asignan otro tipo, o ninguno— y el
+        // usuario ve una carpeta vacía sin entender por qué. Filtrar aquí no
+        // aporta nada: lo que llegue se valida igual con `leerDatos`.
         onChange={async (e) => {
           const archivo = e.target.files?.[0]
           // ⚠️ Se limpia SIEMPRE: sin esto, elegir dos veces el mismo archivo no
