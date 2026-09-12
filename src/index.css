@@ -1,0 +1,23 @@
+/* Casi todo el reset lo pone <CssBaseline /> de MUI. Aquí solo queda lo que
+   no es cosa del tema. */
+
+/* ⚠️ Esto pinta el fondo correcto ANTES de que arranque React.
+   Sin ello, abrir la app en modo oscuro da un fogonazo blanco de un cuadro.
+   Lo normal sería un <script> en el <head> que ponga la clase del tema — pero
+   la app se sirve dentro de luisaldrichguz.net, cuya CSP no permite scripts
+   inline (`script-src 'self'`), así que ese script no se ejecutaría nunca y el
+   fallo solo aparecería ya desplegado. `light-dark()` lo resuelve sin JS. */
+:root { color-scheme: light dark; }
+html, body { background: light-dark(#f5fbf6, #0f1512); }
+html, body, #root { height: 100%; }
+
+/* El dinero se lee en columna, y con la fuente normal el «1» es más angosto
+   que el «8»: las cantidades quedan desalineadas aunque estén bien. */
+.cifras { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
