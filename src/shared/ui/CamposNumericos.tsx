@@ -18,7 +18,6 @@ type BaseProps = {
   etiqueta: string
   valor: number
   alCambiar: (n: number) => void
-  ayuda?: string
   requerido?: boolean
 }
 
@@ -40,14 +39,13 @@ function useTextoNumerico(valor: number) {
   return [texto, setTexto] as const
 }
 
-export function CampoDinero({ etiqueta, valor, alCambiar, ayuda, requerido }: BaseProps) {
+export function CampoDinero({ etiqueta, valor, alCambiar, requerido }: BaseProps) {
   const [texto, setTexto] = useTextoNumerico(valor)
   return (
     <TextField
       label={etiqueta}
       value={texto}
       required={requerido}
-      helperText={ayuda}
       inputMode="decimal"
       onChange={(e) => {
         const t = e.target.value.replace(/[^\d.]/g, '')
@@ -64,13 +62,12 @@ export function CampoDinero({ etiqueta, valor, alCambiar, ayuda, requerido }: Ba
   )
 }
 
-export function CampoPorcentaje({ etiqueta, valor, alCambiar, ayuda }: BaseProps) {
+export function CampoPorcentaje({ etiqueta, valor, alCambiar }: BaseProps) {
   const [texto, setTexto] = useTextoNumerico(valor)
   return (
     <TextField
       label={etiqueta}
       value={texto}
-      helperText={ayuda}
       inputMode="decimal"
       onChange={(e) => {
         const t = e.target.value.replace(/[^\d.]/g, '')
@@ -89,11 +86,9 @@ export function CampoPorcentaje({ etiqueta, valor, alCambiar, ayuda }: BaseProps
 
 /** Día del mes. Es una lista y no un número escrito porque el 31 significa
     «el último día» y eso hay que poder decirlo, no adivinarlo. */
-export function CampoDiaDelMes({
-  etiqueta, valor, alCambiar, ayuda,
-}: Omit<BaseProps, 'requerido'>) {
+export function CampoDiaDelMes({ etiqueta, valor, alCambiar }: Omit<BaseProps, 'requerido'>) {
   return (
-    <TextField select label={etiqueta} value={valor} helperText={ayuda}
+    <TextField select label={etiqueta} value={valor}
       onChange={(e) => alCambiar(Number(e.target.value))}>
       {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
         <MenuItem key={d} value={d}>

@@ -40,11 +40,10 @@ Una feature que necesita algo de otra es la señal de que falta subirlo a `share
 
 | Carpeta | Qué resuelve |
 |---|---|
-| `bienvenida/` | La primera visita: pide el ingreso, o carga el ejemplo |
-| `resumen/` | La portada: dinero comprometido, semáforo, reparto por quincena |
-| `calendario/` | El mes con sus cortes y pagos |
-| `compromisos/` | Alta, edición y borrado de tarjetas, deudas, gastos fijos y metas |
-| `plan/` | El simulador de salida de deudas |
+| `bienvenida/` | La primera visita: pide el ingreso, o carga un JSON |
+| `resumen/` | La portada: el cursor de tiempo, el medidor y lo que cae en esa ventana |
+| `compromisos/` | Alta, edición y borrado de deudas, gastos fijos, tarjetas y metas |
+| `estadisticas/` | Los aros del mes, la proyección y la fecha de salida |
 | `ajustes/` | Perfil de ingreso, tema, instalación y el archivo de datos |
 
 ## El puerto de persistencia
@@ -95,25 +94,28 @@ sobre objetos planos:
 | Archivo | De qué responde |
 |---|---|
 | `fechas.ts` | Fechas de calendario. **Nunca UTC**: un pago del día 1 en México con `new Date('2026-03-01')` se va al 28 de febrero |
-| `compromisos.ts` | Convierte TODO (tarjetas, deudas, fijos, metas) en una sola lista de eventos con fecha y monto |
-| `periodos.ts` | Los periodos de cobro: de un pago al siguiente |
-| `amortizacion.ts` | Intereses y meses para liquidar una deuda |
-| `estrategias.ts` | Avalancha, bola de nieve y la referencia de «no hacer nada» |
-| `panorama.ts` | La foto completa de la portada, calculada de una sola pasada |
+| `compromisos.ts` | Convierte TODO (deudas, tarjetas, fijos, metas) en una sola lista de eventos con fecha y monto |
+| `plazos.ts` | Las deudas a abonos fijos: el calendario de pagos y el avance, calculados desde la fecha |
+| `ventanas.ts` | Semana, quincena y mes, más los días en que te pagan |
+| `amortizacion.ts` | Intereses, meses para liquidar y el total de deuda a una fecha |
+| `estadisticas.ts` | Proyección mensual, fecha de libertad y reparto de la deuda |
 
-**`compromisos.ts` es el único generador de eventos de la app.** El calendario, la
-portada, el reparto por quincena y el semáforo leen de la misma función. Si el mes
-de una tarjeta se calculara en un sitio y el del calendario en otro, tarde o
-temprano dirían cosas distintas y ninguno de los dos estaría «mal».
+**`compromisos.ts` es el único generador de eventos de la app.** La portada y las
+estadísticas leen de la misma función. Si el calendario de una deuda se calculara en
+un sitio y el de la portada en otro, tarde o temprano dirían cosas distintas y
+ninguno de los dos estaría «mal».
 
-Lo mismo con `panorama()`: los números de la portada se calculan **juntos y una
-vez**, y bajan como props. Ningún hijo puede llegar a otro resultado.
+**Y casi todo acepta una fecha de referencia.** `saldoDe(prestamo, ref)`,
+`resumenDeDeuda(datos, ref)`, `avanceDe(plazos, ref)`: el cursor de la portada es el
+FINAL de la ventana que estás mirando, y por eso navegar con las flechas no cambia
+solo la lista — recalcula el avance de cada deuda. ⚠️ Un número que se calculara
+contra `hoy` mezclaría dos momentos en la misma pantalla y nadie notaría cuál.
 
 ## Dónde meter lo nuevo
 
 | Quiero añadir… | Va en… | Y además toca… |
 |---|---|---|
-| Un tipo de compromiso nuevo (p. ej. una suscripción anual compartida) | `shared/almacen/datos.ts` + su `features/compromisos/<tipo>/` | `leerDatos()`, `eventosEnRango()`, `panorama()` y una pestaña en `PantallaPagos` |
+| Un tipo de compromiso nuevo (p. ej. una suscripción anual compartida) | `shared/almacen/datos.ts` + su `features/compromisos/<tipo>/` | `leerDatos()`, `eventosEnRango()` y una ficha en `PantallaPagos` |
 | Una pantalla | `features/<nombre>/` con `Pantalla<Nombre>.tsx` por defecto | una línea en `app/rutas.ts` y un `lazy()` en `app/App.tsx` |
 | Un cálculo | `shared/finanzas/` si lo usan dos features; dentro de la feature si no | — |
 | Un componente visual | dentro de la feature. **Sube a `shared/ui/` cuando lo pida un SEGUNDO consumidor**, nunca antes | — |

@@ -38,24 +38,54 @@ export type Tarjeta = {
   pagoMensual: number
 }
 
+/** Una deuda que se paga en mensualidades fijas y se acaba: los muebles a
+    plazos, un préstamo familiar, los meses sin intereses de una compra.
+
+    Es otra cosa que una deuda abierta, y por eso va aparte: aquí lo que se sabe
+    es lo que COSTÓ y en cuántas, no lo que queda. Lo que queda se calcula con
+    las mensualidades que ya pasaron — que es lo que permite dibujar el avance
+    sin pedirle al usuario que actualice un saldo cada mes. */
+export type Plazos = {
+  /** Lo que costó en total. */
+  total: number
+  /** Cuántos pagos son. */
+  pagos: number
+  /** Cada cuándo cae uno. Mucha gente paga el día que le cae el dinero, no una
+      vez al mes: por eso es un dato de la deuda y no una suposición. */
+  cada: 'mes' | 'quincena'
+  /** El primer pago, 'AAAA-MM-DD'. */
+  inicio: string
+}
+
 export type Prestamo = {
   id: string
   nombre: string
+  /** Lo que debes hoy. ⚠️ Solo manda en las deudas ABIERTAS: si hay `plazos`,
+      el saldo se calcula y este campo se ignora (ver `saldoDe()`). */
   saldo: number
   tasaAnual: number
   pagoMensual: number
   diaPago: number
+  /** Cuando está, la deuda es a plazos y tiene fecha de término. */
+  plazos?: Plazos
 }
 
 export type Fijo = {
   id: string
   nombre: string
   categoria: CategoriaFija
+  /** Lo que cuesta en su periodo completo. Si lo pagas partido, sigue siendo
+      el total: las partes se calculan, no se escriben. */
   monto: number
   frecuencia: FrecuenciaGasto
   diaPago: number
   /** Solo para bimestral y anual: el mes (1-12) en que toca pagar. */
   mesBase?: number
+  /** Lo pagas en partes, una por cada vez que te pagan a ti, en vez de todo
+      el día `diaPago`. Mucha gente parte la renta en dos mitades porque la
+      paga con el dinero que va entrando, y sin esto la quincena en que cae
+      el cargo entero sale carísima y la otra vacía — las dos mentira. */
+  partidoPorCobro?: boolean
 }
 
 export type Meta = {
@@ -135,6 +165,7 @@ export function leerDatos(crudo: unknown): Datos | null {
       tasaAnual: num(p2.tasaAnual),
       pagoMensual: num(p2.pagoMensual),
       diaPago: Math.min(31, Math.max(1, num(p2.diaPago, 1))),
+      plazos: leerPlazos(p2.plazos),
     })),
     fijos: lista<Fijo>(d.fijos).map((f) => ({
       id: texto(f.id) || nuevoId(),
@@ -146,6 +177,7 @@ export function leerDatos(crudo: unknown): Datos | null {
         .includes(f.frecuencia as FrecuenciaGasto) ? (f.frecuencia as FrecuenciaGasto) : 'mensual',
       diaPago: Math.min(31, Math.max(1, num(f.diaPago, 1))),
       mesBase: f.mesBase === undefined ? undefined : Math.min(12, Math.max(1, num(f.mesBase, 1))),
+      partidoPorCobro: f.partidoPorCobro === true ? true : undefined,
     })),
     metas: lista<Meta>(d.metas).map((m) => ({
       id: texto(m.id) || nuevoId(),
@@ -156,4 +188,17 @@ export function leerDatos(crudo: unknown): Datos | null {
       diaPago: Math.min(31, Math.max(1, num(m.diaPago, 1))),
     })),
   }
+}
+
+/** Los plazos entran enteros o no entran. Un bloque a medias —con las
+    mensualidades pero sin fecha de inicio— haría que el avance se calculara
+    desde una fecha inventada, y eso se ve como un dato bueno. */
+function leerPlazos(v: unknown): Plazos | undefined {
+  if (typeof v !== 'object' || v === null) return undefined
+  const p = v as Partial<Plazos>
+  const total = typeof p.total === 'number' && isFinite(p.total) ? p.total : 0
+  const pagos = typeof p.pagos === 'number' && isFinite(p.pagos) ? Math.round(p.pagos) : 0
+  const inicio = typeof p.inicio === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.inicio) ? p.inicio : ''
+  if (total <= 0 || pagos < 1 || !inicio) return undefined
+  return { total, pagos, cada: p.cada === 'quincena' ? 'quincena' : 'mes', inicio }
 }

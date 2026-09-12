@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ComponentType } from 'react'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
-import Fab from '@mui/material/Fab'
 import Stack from '@mui/material/Stack'
 import AddRounded from '@mui/icons-material/AddRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
@@ -27,29 +26,48 @@ export type DefinicionSeccion<T> = {
   /** «tarjeta», «préstamo»… Sale en el botón y en el título del diálogo. */
   singular: string
   Icono: SvgIconComponent
-  vacio: { titulo: string; texto: string }
+  vacio: { titulo: string }
   /** Cómo nace una nueva. Incluye el id. */
   nuevo: () => T
   Ficha: ComponentType<{ item: T; alEditar: () => void }>
   Formulario: ComponentType<{ valor: T; alCambiar: (f: (t: T) => T) => void }>
   /** Qué hace falta para poder guardar. */
   valido: (t: T) => boolean
+  /** Cómo se ordena en pantalla. Por omisión, como se guardó. */
+  ordenar?: (a: T, b: T) => number
 }
 
 export function SeccionCrud<T extends { id: string }>({
-  items, alGuardar, definicion,
+  items, alGuardar, definicion, abrirNuevo: pedido, alAbrir,
 }: {
   items: T[]
   alGuardar: (items: T[]) => void
   definicion: DefinicionSeccion<T>
+  /** Para el botón de añadir de la barra de abajo: entra pidiendo el diálogo. */
+  abrirNuevo?: boolean
+  alAbrir?: () => void
 }) {
-  const { singular, Icono, vacio, nuevo, Ficha, Formulario, valido } = definicion
+  const { singular, Icono, vacio, nuevo, Ficha, Formulario, valido, ordenar } = definicion
+  // ⚠️ Se ordena una COPIA: `sort` muta, y mutar `items` es reordenar el estado
+  // guardado como efecto secundario de pintarlo.
+  const enPantalla = ordenar ? [...items].sort(ordenar) : items
   // null = diálogo cerrado. El borrador es una COPIA: si se cancela a medias,
   // la lista no se enteró de nada.
   const [borrador, setBorrador] = useState<T | null>(null)
   const [esNuevo, setEsNuevo] = useState(false)
 
   const abrirNuevo = () => { setBorrador(nuevo()); setEsNuevo(true) }
+
+  // El botón de la barra navega con `?nuevo=1`; al llegar aquí se abre el
+  // diálogo y se avisa para que la dirección se limpie — si no, volver atrás
+  // desde otra pantalla lo abriría otra vez.
+  useEffect(() => {
+    if (!pedido) return
+    abrirNuevo()
+    alAbrir?.()
+    // Solo cuando llega la petición.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedido])
   const abrirEdicion = (item: T) => { setBorrador({ ...item }); setEsNuevo(false) }
   const cerrar = () => setBorrador(null)
 
@@ -68,11 +86,10 @@ export function SeccionCrud<T extends { id: string }>({
   return (
     <>
       {items.length === 0 ? (
-        <Vacio Icono={Icono} titulo={vacio.titulo} texto={vacio.texto}
-          accion={`Agregar ${singular}`} alPulsar={abrirNuevo} />
+        <Vacio Icono={Icono} titulo={vacio.titulo} accion={`Agregar ${singular}`} alPulsar={abrirNuevo} />
       ) : (
         <Stack spacing={2}>
-          {items.map((item) => (
+          {enPantalla.map((item) => (
             <Ficha key={item.id} item={item} alEditar={() => abrirEdicion(item)} />
           ))}
           <Button startIcon={<AddRounded />} onClick={abrirNuevo} sx={{ alignSelf: 'flex-start' }}>
@@ -81,17 +98,6 @@ export function SeccionCrud<T extends { id: string }>({
         </Stack>
       )}
 
-      {/* En el móvil el botón de añadir también va flotando: la lista puede
-          ser larga y el de arriba se queda fuera de pantalla. */}
-      {items.length > 0 && (
-        <Fab color="primary" onClick={abrirNuevo} aria-label={`Agregar ${singular}`}
-          sx={{
-            position: 'fixed', right: 16, display: { xs: 'flex', md: 'none' },
-            bottom: 'calc(72px + env(safe-area-inset-bottom))',
-          }}>
-          <AddRounded />
-        </Fab>
-      )}
 
       <Dialog open={borrador !== null} onClose={cerrar} fullWidth maxWidth="xs">
         <DialogTitle>{esNuevo ? `Agregar ${singular}` : `Editar ${singular}`}</DialogTitle>

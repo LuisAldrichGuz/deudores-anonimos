@@ -1,5 +1,7 @@
-import type { Datos, Fijo, Tarjeta } from '../almacen/datos'
-import { diasEntre, fechaDelMes, hoy, sumarDias } from './fechas'
+import type { Datos, Fijo, Perfil, Tarjeta } from '../almacen/datos'
+import { diasEnMes, diasEntre, fechaDelMes, hoy, sumarDias } from './fechas'
+import { fechaDePago, importeDePago } from './plazos'
+import { fechasDeCobro } from './ventanas'
 
 /* Todo lo que se paga —tarjetas, préstamos, gastos fijos y lo que apartas—
    se convierte aquí en UNA lista de eventos con fecha y monto.
@@ -38,6 +40,28 @@ function mesesQueTocan(desde: Date, hasta: Date) {
     cursor.setMonth(cursor.getMonth() + 1)
   }
   return meses
+}
+
+/** Los cargos de un gasto fijo dentro de un mes: cuándo caen y de a cuánto.
+
+    ⚠️ Con `partidoPorCobro` el gasto NO se parte «en dos quincenas»: se parte
+    entre los días en que a TI te pagan. Es la misma idea que en las deudas —
+    se paga cuando entra el dinero— y por eso a quien cobra una vez al mes le
+    sale un solo cargo, que es lo correcto, sin ningún caso especial. */
+function cargosDelMes(g: Fijo, perfil: Perfil, anio: number, mes: number) {
+  if (g.partidoPorCobro) {
+    const cobros = fechasDeCobro(perfil, new Date(anio, mes, 1), new Date(anio, mes, diasEnMes(anio, mes)))
+      .filter((f) => f.getFullYear() === anio && f.getMonth() === mes)
+    if (cobros.length) {
+      return cobros.map((fecha) => ({ fecha, monto: g.monto / cobros.length }))
+    }
+    // Sin días de cobro en el mes no hay entre qué repartir: cae entero.
+  }
+
+  const dias = g.frecuencia === 'quincenal' ? [g.diaPago, g.diaPago + 15] : [g.diaPago]
+  return dias
+    .filter((d) => d <= 31)
+    .map((d) => ({ fecha: fechaDelMes(anio, mes, d), monto: g.monto }))
 }
 
 /** ¿Este gasto toca en este mes? Para bimestral y anual manda `mesBase`. */
@@ -86,7 +110,12 @@ export function eventosEnRango(datos: Datos, desde: Date, hasta: Date): Evento[]
       }
     }
 
+    // Las deudas ABIERTAS se repiten cada mes; las de plazos fijos tienen su
+    // propio calendario y SE ACABAN. Las segundas se generan aparte, fuera de
+    // este bucle de meses, porque sus fechas no dependen del mes: dependen de
+    // cuándo empezó la deuda y de si paga por mes o por quincena.
     for (const p of datos.prestamos) {
+      if (p.plazos) continue
       const f = fechaDelMes(anio, mes, p.diaPago)
       if (dentro(f) && p.pagoMensual > 0) {
         eventos.push({
@@ -101,19 +130,17 @@ export function eventosEnRango(datos: Datos, desde: Date, hasta: Date): Evento[]
     }
 
     for (const g of datos.fijos) {
-      if (!tocaEsteMes(g, mes)) continue
-      const dias = g.frecuencia === 'quincenal' ? [g.diaPago, g.diaPago + 15] : [g.diaPago]
-      for (const dia of dias) {
-        if (dia > 31) continue
-        const f = fechaDelMes(anio, mes, dia)
-        if (!dentro(f) || g.monto <= 0) continue
+      if (!tocaEsteMes(g, mes) || g.monto <= 0) continue
+
+      for (const { fecha, monto } of cargosDelMes(g, datos.perfil, anio, mes)) {
+        if (!dentro(fecha)) continue
         eventos.push({
-          id: claveEvento(g.id, f),
+          id: claveEvento(g.id, fecha),
           origenId: g.id,
           tipo: 'fijo',
           nombre: g.nombre,
-          monto: g.monto,
-          fecha: f,
+          monto,
+          fecha,
         })
       }
     }
@@ -131,6 +158,26 @@ export function eventosEnRango(datos: Datos, desde: Date, hasta: Date): Evento[]
           detalle: 'lo que apartas',
         })
       }
+    }
+  }
+
+  for (const p of datos.prestamos) {
+    if (!p.plazos) continue
+    const importe = importeDePago(p.plazos)
+    for (let n = 1; n <= p.plazos.pagos; n++) {
+      const f = fechaDePago(p.plazos, n)
+      // Los pagos van en orden, así que en cuanto uno se pasa del rango los
+      // demás también: no hace falta recorrer doce cuotas para descartarlas.
+      if (f > hasta) break
+      if (f < desde || importe <= 0) continue
+      eventos.push({
+        id: claveEvento(p.id, f),
+        origenId: p.id,
+        tipo: 'prestamo',
+        nombre: p.nombre,
+        monto: importe,
+        fecha: f,
+      })
     }
   }
 
@@ -179,8 +226,3 @@ export function diasSinIntereses(t: Tarjeta, desde = hoy()): number {
   return diasEntre(desde, sumarDias(proximoCorte(t, desde), t.diasParaPagar))
 }
 
-/** El mejor día para comprar con esta tarjeta y cuántos días da. */
-export function mejorDiaDeCompra(t: Tarjeta, desde = hoy()) {
-  const dia = sumarDias(proximoCorte(t, desde), 1)
-  return { dia, dias: diasSinIntereses(t, dia) }
-}

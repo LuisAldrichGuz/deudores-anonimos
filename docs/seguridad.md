@@ -41,7 +41,8 @@ Después de la carga inicial no se mueve nada. Ni una petición.
    por omisión escribe en `localStorage` y punto. Meter una fuga implicaría
    escribir un adaptador nuevo, que es un archivo entero y visible en el diff.
 
-3. **La tipografía va empaquetada.** Roboto se sirve desde el mismo origen. Si
+3. **La tipografía va empaquetada.** Instrument Sans y JetBrains Mono se sirven
+   desde el mismo origen. Si
    viniera de Google Fonts, cada carga de la app le diría tu IP a un tercero — que
    es exactamente el tipo de fuga silenciosa que este proyecto quiere evitar.
 
@@ -77,8 +78,8 @@ Esto es lo que un documento de seguridad honesto tiene que decir:
   en el celular. El JSON es el puente, a mano y a propósito.
 - **No valida que tus números sean ciertos.** Si escribes mal una tasa, la fecha de
   salida estará mal. La app calcula, no audita.
-- **No sustituye a un asesor financiero.** Los cortes del semáforo son criterios
-  generales de la industria (pago de deuda sobre ingreso, uso de línea), no un
+- **No sustituye a un asesor financiero.** Los cortes de las estadísticas (pago de
+  deuda sobre ingreso, uso de línea) son criterios generales de la industria, no un
   dictamen sobre tu caso.
 
 ## Decisiones de seguridad en el código

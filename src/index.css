@@ -1,23 +1,43 @@
-/* Casi todo el reset lo pone <CssBaseline /> de MUI. Aquí solo queda lo que
-   no es cosa del tema. */
+/* Casi todo el reset lo pone <CssBaseline /> de MUI. Aquí queda lo que no es
+   cosa del tema: el fondo antes de que arranque React, las cifras y el
+   movimiento. */
 
-/* ⚠️ Esto pinta el fondo correcto ANTES de que arranque React.
-   Sin ello, abrir la app en modo oscuro da un fogonazo blanco de un cuadro.
-   Lo normal sería un <script> en el <head> que ponga la clase del tema — pero
-   la app se sirve dentro de luisaldrichguz.net, cuya CSP no permite scripts
-   inline (`script-src 'self'`), así que ese script no se ejecutaría nunca y el
-   fallo solo aparecería ya desplegado. `light-dark()` lo resuelve sin JS. */
-:root { color-scheme: light dark; }
-html, body { background: light-dark(#f5fbf6, #0f1512); }
+/* ⚠️ Esto pinta el fondo correcto ANTES del primer fotograma de React. Sin
+   ello, abrir la app da un fogonazo blanco. Lo normal sería un <script> en el
+   <head>, pero la app se sirve dentro de luisaldrichguz.net y su CSP no
+   permite scripts inline: ese script no correría nunca y el fallo solo
+   aparecería ya desplegado. `light-dark()` lo resuelve sin JS. */
+:root { color-scheme: dark light; }
+html, body { background: light-dark(#FAF8F5, #15171A); }
 html, body, #root { height: 100%; }
 
-/* El dinero se lee en columna, y con la fuente normal el «1» es más angosto
-   que el «8»: las cantidades quedan desalineadas aunque estén bien. */
-.cifras { font-variant-numeric: tabular-nums; }
+/* El dinero se lee en columna, y en una proporcional el «1» es más angosto que
+   el «8»: las cantidades quedan desalineadas aunque estén bien. */
+.cifras {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* ── Movimiento ───────────────────────────────────────────────
+   Una entrada escalonada de arriba abajo y un llenado por cada medidor. Nada
+   rebota, nada late, nada se repite: es dinero, no un juguete. El retraso lo
+   pone cada bloque con `style={{ animationDelay }}`. */
+
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.sube { animation: subir .5s cubic-bezier(.2,.8,.2,1) backwards; }
+
+@keyframes crecer-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.crece { transform-origin: left; animation: crecer-x .8s .3s cubic-bezier(.2,.8,.2,1) backwards; }
+
+@keyframes crecer-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.crece-alto { transform-origin: bottom; animation: crecer-y .7s cubic-bezier(.2,.8,.2,1) backwards; }
+
+/* El aro se llena una vez, desde arriba. El destino lo pone cada aro con una
+   variable, porque el porcentaje cambia por instancia. */
+@keyframes llenar-aro { from { stroke-dashoffset: var(--vuelta); } to { stroke-dashoffset: var(--resto); } }
+.aro { animation: llenar-aro 1s .3s cubic-bezier(.2,.8,.2,1) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    transition-duration: .01ms !important;
-  }
+  .sube, .crece, .crece-alto, .aro { animation: none !important; }
 }

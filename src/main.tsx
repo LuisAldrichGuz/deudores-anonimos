@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
-import '@fontsource-variable/roboto'
+import '@fontsource-variable/instrument-sans'
+import '@fontsource-variable/jetbrains-mono'
 import './index.css'
 
 import { tema } from './app/tema'
@@ -13,7 +14,7 @@ import { ProveedorAlmacen } from './shared/almacen/Almacen'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider theme={tema} defaultMode="system">
+    <ThemeProvider theme={tema} defaultMode="dark">
       <CssBaseline />
       {/* Sin adaptador: la app vive en /deudas/, no en la raíz del dominio. */}
       <BrowserRouter basename={import.meta.env.BASE_URL}>

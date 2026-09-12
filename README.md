@@ -27,30 +27,29 @@ pago está comprometido. Y para eso no hace falta tu banco: hace falta tu calend
 
 | | |
 |---|---|
-| **Dinero comprometido** | De tu próxima quincena, cuánto ya está apartado y cuánto te queda por día |
-| **Reparto por periodo** | Cuánto guardar en cada quincena, y **qué pago mover** cuando una va apretada y la otra sobrada |
-| **Calendario** | Cortes de tarjeta, fechas límite, recibos y lo que apartas, en un mes |
-| **Días sin intereses** | Cuántos te dan si compras hoy con cada tarjeta, y **cuál es el mejor día para comprar** |
-| **Lo que quemas** | Cuánto se va en puros intereses cada mes, sin bajar un peso del saldo |
-| **Plan de salida** | Avalancha vs. bola de nieve, con la fecha exacta en que quedas libre y cuánto te ahorras |
-| **¿Y si abono más?** | Un deslizador que recalcula la fecha de salida en vivo |
-| **Apartado mensual real** | La parte proporcional de lo que se paga una vez al año (tenencia, seguro, predial) |
-| **Fondo de emergencia** | Cuánto necesitas guardado para aguantar N meses pagando lo mismo |
-| **Semáforo** | Tres porcentajes con los mismos cortes que usa un banco para decidir si te presta |
+| **Semana, quincena o mes** | Eliges la ventana y navegas con las flechas: **todo se recalcula a esa fecha**, incluido el avance de cada deuda. Sirve para ver cómo vas a estar dentro de tres quincenas |
+| **Medidor de gastado y libre** | De lo que entra en ese periodo, cuánto ya no es tuyo, cuánto queda y cuánto es al día |
+| **Fijos aparte de deudas** | Subtotales separados: un gasto fijo se renegocia, una deuda no |
+| **Línea de tiempo por deuda** | Una barra por mes —partida a la mitad si pagas por quincena— con lo pagado, lo de este periodo y lo que falta |
+| **Pagos que siguen tu nómina** | Una deuda o un gasto fijo se puede pagar **cuando te cae el dinero**, repartido entre tus días de cobro, en vez de un cargo entero un día suelto |
+| **Estadísticas** | Dos aros del mes, la fecha exacta en que quedas libre, lo que cae cada mes hasta entonces, ratio deuda/ingreso, en qué está repartida la deuda y cuáles caen primero |
+| **Tarjetas de crédito** | Corte, fecha límite, uso de la línea, intereses que se van al mes y cuántos días sin intereses te dan si compras hoy |
+| **Prorrateo de lo no mensual** | La tenencia no se paga en marzo: se paga todo el año, de a poquito |
 
 Tres detalles que casi nadie implementa y que aquí sí están:
 
+- **El saldo no se escribe, se calcula.** De una deuda a plazos se guarda lo que costó,
+  en cuántos pagos y desde cuándo; lo que falta sale de la fecha. Así el avance es
+  cierto sin que nadie tenga que actualizar un saldo cada mes — que es exactamente lo
+  que nadie hace, y por eso las apps que lo piden a mano acaban mintiendo.
+- **El ancho de cada mes es proporcional a los pagos que caen en él**, así que un mes a
+  medias mide medio mes y la barra nunca arranca con un hueco.
 - **Si un pago no cubre ni los intereses, lo dice con nombre y apellido** en vez de
   dibujar una fecha de salida imposible.
-- **Los gastos que no son mensuales se prorratean.** El seguro del coche no se paga en
-  marzo: se paga todo el año, de a poquito.
-- **El pago liberado se reinvierte.** Cuando una deuda cae, su mensualidad se suma al
-  ataque de la siguiente — que es todo el truco de la bola de nieve, y el plan lo
-  explica paso por paso.
 
 <p align="center">
-  <img src="docs/capturas/plan.png" width="49%" alt="Plan para salir de deudas">
-  <img src="docs/capturas/movil.png" width="24%" alt="La app en el celular">
+  <img src="docs/capturas/estadisticas.png" width="32%" alt="Estadísticas">
+  <img src="docs/capturas/deudas.png" width="32%" alt="Las deudas">
 </p>
 
 ## La privacidad no es una promesa, es la arquitectura
@@ -58,7 +57,8 @@ Tres detalles que casi nadie implementa y que aquí sí están:
 No es que los datos estén "seguros en nuestros servidores". Es que **no hay servidores**:
 
 - Cero llamadas de red en todo el código de la app. No hay `fetch`, no hay SDK de
-  analítica, no hay fuentes de Google (Roboto va empaquetada).
+  analítica, no hay fuentes de Google (Instrument Sans y JetBrains Mono van
+  empaquetadas).
 - La persistencia entra y sale por **una sola interfaz** (`AlmacenDeDatos`, 4 métodos).
   El adaptador por omisión escribe en `localStorage` y nada más.
 - Se sirve con una CSP que bloquea cualquier origen externo, así que aunque una
@@ -85,10 +85,10 @@ Node 20 o superior. No hay base de datos, ni `.env`, ni servicios que levantar.
 src/
   app/            arranque, tema, rutas y el armazón de navegación
   features/       una carpeta por lo que el usuario hace
-    bienvenida/   resumen/   calendario/   compromisos/   plan/   ajustes/
+    bienvenida/   resumen/   compromisos/   estadisticas/   ajustes/
   shared/
     almacen/      el modelo de datos y el puerto de persistencia
-    finanzas/     TODA la matemática: fechas, intereses, periodos, estrategias
+    finanzas/     TODA la matemática: fechas, plazos, ventanas, estadísticas
     formato/      cómo se ve el dinero
     ui/           las piezas que usan dos o más features
 ```
@@ -124,8 +124,9 @@ Escribes tu adaptador, lo pasas al proveedor y ya. **Ningún componente cambia.*
 
 ## Stack
 
-React 19 · TypeScript en modo estricto · MUI 9 (Material Design 3) · Vite 8 ·
-`vite-plugin-pwa` (Workbox). Sin backend, sin estado global, sin CSS-in-JS propio.
+React 19 · TypeScript en modo estricto · MUI 9 · Vite 8 · `vite-plugin-pwa`
+(Workbox). Instrument Sans y JetBrains Mono, empaquetadas. Sin backend, sin estado
+global, sin librería de gráficas — las barras y los aros son SVG y CSS.
 
 | Documento | Qué contiene |
 |---|---|

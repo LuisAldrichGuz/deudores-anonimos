@@ -2,7 +2,9 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import MenuItem from '@mui/material/MenuItem'
+import Switch from '@mui/material/Switch'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -12,6 +14,7 @@ import EditRounded from '@mui/icons-material/EditRounded'
 import type { CategoriaFija, Fijo, FrecuenciaGasto } from '../../../shared/almacen/datos'
 import { nuevoId } from '../../../shared/almacen/datos'
 import { costoMensual } from '../../../shared/finanzas/compromisos'
+import { useAlmacen } from '../../../shared/almacen/Almacen'
 import { MESES } from '../../../shared/finanzas/fechas'
 import { pesos } from '../../../shared/formato/moneda'
 import { CampoDinero, CampoDiaDelMes } from '../../../shared/ui/CamposNumericos'
@@ -36,11 +39,16 @@ const FRECUENCIAS: { valor: FrecuenciaGasto; texto: string }[] = [
 
 const textoFrecuencia = (f: FrecuenciaGasto) => FRECUENCIAS.find((x) => x.valor === f)!.texto
 
+/** En cuántas partes cae un gasto partido: una por cada vez que te pagan. */
+const VECES = { mensual: 1, quincenal: 2, semanal: 4 } as const
+
 /** Los que no se pagan todos los meses necesitan saber en CUÁL toca. */
 const necesitaMes = (f: FrecuenciaGasto) => f === 'bimestral' || f === 'anual'
 
 function FichaFijo({ item, alEditar }: { item: Fijo; alEditar: () => void }) {
+  const { datos } = useAlmacen()
   const mensual = costoMensual(item)
+  const partes = item.partidoPorCobro ? VECES[datos.perfil.frecuencia] : 1
   return (
     <Card>
       <CardContent>
@@ -49,7 +57,9 @@ function FichaFijo({ item, alEditar }: { item: Fijo; alEditar: () => void }) {
             <Typography variant="h6" noWrap>{item.nombre}</Typography>
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mt: .5 }}>
               <Chip size="small" variant="outlined" label={textoFrecuencia(item.frecuencia)} />
-              <Chip size="small" variant="outlined" label={`Día ${item.diaPago}`} />
+              {partes > 1
+                ? <Chip size="small" variant="outlined" label={`En ${partes} partes`} />
+                : <Chip size="small" variant="outlined" label={`Día ${item.diaPago}`} />}
               {necesitaMes(item.frecuencia) && item.mesBase && (
                 <Chip size="small" variant="outlined" label={`Desde ${MESES[item.mesBase - 1]}`} />
               )}
@@ -57,7 +67,12 @@ function FichaFijo({ item, alEditar }: { item: Fijo; alEditar: () => void }) {
           </Stack>
           <Stack sx={{ alignItems: 'flex-end' }}>
             <Typography variant="h6" className="cifras">{pesos(item.monto)}</Typography>
-            {item.frecuencia !== 'mensual' && (
+            {partes > 1 && (
+              <Typography variant="caption" color="text.secondary" className="cifras">
+                {pesos(item.monto / partes)} cada vez
+              </Typography>
+            )}
+            {partes === 1 && item.frecuencia !== 'mensual' && (
               <Typography variant="caption" color="text.secondary" className="cifras">
                 {pesos(mensual)} al mes
               </Typography>
@@ -73,10 +88,7 @@ function FichaFijo({ item, alEditar }: { item: Fijo; alEditar: () => void }) {
 export const SECCION_FIJOS: DefinicionSeccion<Fijo> = {
   singular: 'gasto fijo',
   Icono: ReceiptLongRounded,
-  vacio: {
-    titulo: 'Sin gastos fijos',
-    texto: 'La renta, la luz, el internet, el gimnasio, el seguro del coche. Lo que se paga sí o sí, aunque no sea todos los meses.',
-  },
+  vacio: { titulo: 'Sin gastos fijos' },
   nuevo: () => ({
     id: nuevoId(), nombre: '', categoria: 'otro', monto: 0,
     frecuencia: 'mensual', diaPago: 1,
@@ -108,8 +120,22 @@ export const SECCION_FIJOS: DefinicionSeccion<Fijo> = {
           {MESES.map((m, i) => <MenuItem key={m} value={i + 1}>{m}</MenuItem>)}
         </TextField>
       )}
-      <CampoDiaDelMes etiqueta="Día de pago" valor={valor.diaPago}
-        alCambiar={(n) => alCambiar((f) => ({ ...f, diaPago: n }))} />
+      <FormControlLabel
+        label="Lo pago cuando me cae el dinero"
+        control={
+          <Switch
+            checked={!!valor.partidoPorCobro}
+            onChange={(e) => alCambiar((f) => ({ ...f, partidoPorCobro: e.target.checked || undefined }))}
+          />
+        }
+      />
+      {/* ⚠️ Con el reparto puesto, el día de pago deja de decidir nada: las
+          fechas salen de cuándo te pagan. Se esconde en vez de dejarlo ahí
+          sin efecto, que es peor que no tenerlo. */}
+      {!valor.partidoPorCobro && (
+        <CampoDiaDelMes etiqueta="Día de pago" valor={valor.diaPago}
+          alCambiar={(n) => alCambiar((f) => ({ ...f, diaPago: n }))} />
+      )}
       <TextField select label="Categoría" value={valor.categoria}
         onChange={(e) => alCambiar((f) => ({ ...f, categoria: e.target.value as CategoriaFija }))}>
         {CATEGORIAS.map((c) => <MenuItem key={c.valor} value={c.valor}>{c.texto}</MenuItem>)}

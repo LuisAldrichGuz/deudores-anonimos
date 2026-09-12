@@ -13,7 +13,7 @@ export const MESES = [
 
 export const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 
-export const DIA_MS = 86_400_000
+const DIA_MS = 86_400_000
 
 export function hoy(): Date {
   const d = new Date()
@@ -49,11 +49,7 @@ export function diasEntre(a: Date, b: Date): number {
   return Math.round((y.getTime() - x.getTime()) / DIA_MS)
 }
 
-export const mismoDia = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 
-export const claveDia = (f: Date) =>
-  `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`
 
 export function textoFecha(f: Date, conAnio = false): string {
   return `${f.getDate()} de ${MESES[f.getMonth()]}${conAnio ? ` de ${f.getFullYear()}` : ''}`
@@ -63,11 +59,3 @@ export function textoFechaCorta(f: Date): string {
   return `${f.getDate()} ${MESES[f.getMonth()].slice(0, 3)}`
 }
 
-/** «hoy», «mañana», «en 3 días», «hace 2 días». */
-export function textoRelativo(f: Date, desde = hoy()): string {
-  const d = diasEntre(desde, f)
-  if (d === 0) return 'hoy'
-  if (d === 1) return 'mañana'
-  if (d === -1) return 'ayer'
-  return d > 0 ? `en ${d} días` : `hace ${-d} días`
-}

@@ -48,10 +48,7 @@ function FichaMeta({ item, alEditar }: { item: Meta; alEditar: () => void }) {
 export const SECCION_METAS: DefinicionSeccion<Meta> = {
   singular: 'meta',
   Icono: SavingsRounded,
-  vacio: {
-    titulo: 'Sin metas de ahorro',
-    texto: 'El fondo de emergencia, un viaje, cambiar la compu. Lo que apartas cuenta como un pago más: si no se aparta, se gasta.',
-  },
+  vacio: { titulo: 'Sin metas de ahorro' },
   nuevo: () => ({ id: nuevoId(), nombre: '', objetivo: 0, ahorrado: 0, aportacion: 0, diaPago: 1 }),
   Ficha: FichaMeta,
   Formulario: ({ valor, alCambiar }) => (

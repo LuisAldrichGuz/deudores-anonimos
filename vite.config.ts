@@ -33,16 +33,17 @@ export default defineConfig({
         lang: 'es-MX',
         dir: 'ltr',
         categories: ['finance', 'productivity'],
-        background_color: '#f5fbf6',
-        theme_color: '#1b6b50',
+        background_color: '#15171A',
+        theme_color: '#15171A',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // Los accesos del menú largo del icono, como en sedeco.
         shortcuts: [
-          { name: 'Calendario de pagos', short_name: 'Calendario', url: `${BASE}calendario` },
-          { name: 'Plan para salir de deudas', short_name: 'Plan', url: `${BASE}plan` },
+          { name: 'Agregar una deuda', short_name: 'Agregar', url: `${BASE}pagos?nuevo=1` },
+          { name: 'Estadísticas', short_name: 'Stats', url: `${BASE}stats` },
         ],
       },
       workbox: {

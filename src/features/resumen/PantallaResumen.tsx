@@ -1,137 +1,148 @@
 import { useMemo } from 'react'
+import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import { Link, useNavigate } from 'react-router-dom'
-import CreditCardOffRounded from '@mui/icons-material/CreditCardOffRounded'
-import AccountBalanceWalletRounded from '@mui/icons-material/AccountBalanceWalletRounded'
-import SavingsRounded from '@mui/icons-material/SavingsRounded'
-import EventAvailableRounded from '@mui/icons-material/EventAvailableRounded'
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded'
+import { useNavigate } from 'react-router-dom'
 
 import { useAlmacen } from '../../shared/almacen/Almacen'
-import { panorama, resumenSiguiente } from '../../shared/finanzas/panorama'
-import { eventosEnRango } from '../../shared/finanzas/compromisos'
-import { nombrePeriodo } from '../../shared/finanzas/periodos'
-import { hoy, sumarDias } from '../../shared/finanzas/fechas'
+import { resumenDeDeuda } from '../../shared/finanzas/amortizacion'
+import { diasEntre } from '../../shared/finanzas/fechas'
 import { pesos, porcentaje } from '../../shared/formato/moneda'
-import { DineroFantasma } from './DineroFantasma'
-import { Semaforo } from './Semaforo'
-import { RepartoPorPeriodo } from './RepartoPorPeriodo'
-import { TarjetaDato } from '../../shared/ui/TarjetaDato'
+import { ACENTO } from '../../app/tema'
+import { AroDeProgreso } from '../../shared/ui/AroDeProgreso'
 import { Medidor } from '../../shared/ui/Medidor'
-import { Rejilla } from '../../shared/ui/Rejilla'
-import { ListaDePagos } from '../../shared/ui/ListaDePagos'
 import { Vacio } from '../../shared/ui/Vacio'
-
-const DIAS_A_LA_VISTA = 12
+import { FilaDeDeuda } from './FilaDeDeuda'
+import { SelectorDePeriodo } from './SelectorDePeriodo'
+import { TITULO_DE, useVentana } from './useVentana'
 
 export default function PantallaResumen() {
   const { datos } = useAlmacen()
   const navegar = useNavigate()
+  const v = useVentana(datos)
+  const deuda = useMemo(() => resumenDeDeuda(datos, v.corte), [datos, v.corte])
 
-  // Una sola pasada para toda la pantalla: los números se calculan aquí y
-  // bajan como props, así ningún hijo puede llegar a otro resultado.
-  const foto = useMemo(() => panorama(datos), [datos])
-  const siguiente = useMemo(() => resumenSiguiente(datos), [datos])
-  const proximos = useMemo(
-    () => eventosEnRango(datos, hoy(), sumarDias(hoy(), DIAS_A_LA_VISTA)),
-    [datos],
-  )
-
-  const sinNada = !datos.tarjetas.length && !datos.prestamos.length && !datos.fijos.length && !datos.metas.length
+  const sinNada = !datos.prestamos.length && !datos.tarjetas.length
+    && !datos.fijos.length && !datos.metas.length
 
   if (sinNada) {
     return (
-      <Vacio
-        Icono={PaymentsRounded}
-        titulo="Todavía no hay nada que sumar"
-        texto="Agrega tus tarjetas, tus deudas y lo que pagas cada mes. En cuanto haya algo, aquí sale cuánto tienes que apartar de cada pago."
-        accion="Agregar mi primer pago"
-        alPulsar={() => navegar('/pagos')}
-      />
+      <Vacio Icono={PaymentsRounded} titulo="Todavía no hay nada que sumar"
+        accion="Agregar lo que pagas" alPulsar={() => navegar('/pagos')} />
     )
   }
 
+  const dias = Math.max(1, diasEntre(v.ventana.inicio, v.ventana.fin) + 1)
+  const fijos = v.grupos.find((g) => g.grupo === 'fijo')?.subtotal ?? 0
+  const deudas = v.grupos.find((g) => g.grupo === 'deuda')?.subtotal ?? 0
+
   return (
-    <Stack spacing={2}>
-      <DineroFantasma resumen={siguiente} periodo={nombrePeriodo(datos.perfil)} />
+    <Stack spacing={1.75}>
+      <Box className="sube"><SelectorDePeriodo unidad={v.unidad} ventana={v.ventana} alCambiar={v.mover} /></Box>
 
-      <Rejilla>
-        <TarjetaDato
-          titulo="Debes en total"
-          valor={pesos(foto.deudaTotal)}
-          Icono={CreditCardOffRounded}
-          pie={
-            foto.interesMensual > 0
-              ? `Solo en intereses se te van ${pesos(foto.interesMensual)} al mes.`
-              : 'Sin deudas registradas.'
-          }
-        />
-        <TarjetaDato
-          titulo="Apartas al mes"
-          valor={pesos(foto.apartadoMensual)}
-          Icono={AccountBalanceWalletRounded}
-          pie={`${porcentaje(foto.porcentajeComprometido)} de lo que ganas. Incluye la parte mensual de lo que se paga una vez al año.`}
-        />
-        <TarjetaDato
-          titulo="Te queda libre al mes"
-          valor={pesos(foto.libreMensual)}
-          Icono={SavingsRounded}
-          color={foto.libreMensual < 0 ? 'error.main' : 'text.primary'}
-          pie={
-            foto.libreMensual < 0
-              ? 'Estás comprometiendo más de lo que entra.'
-              : 'Después de deudas, gastos fijos y lo que apartas.'
-          }
-        />
-      </Rejilla>
-
-      <Semaforo panorama={foto} />
-
-      <Rejilla columnas={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">
-              Lo que viene en {DIAS_A_LA_VISTA} días
-            </Typography>
-            {proximos.length ? (
-              <ListaDePagos eventos={proximos} />
-            ) : (
-              <Typography color="text.secondary" sx={{ py: 3 }}>
-                Nada a la vista. Los siguientes pagos caen más adelante.
+      {/* El medidor: cuánto de lo que entra ya no es tuyo. */}
+      <Card className="sube" style={{ animationDelay: '.08s' }}>
+        <CardContent sx={{ display: 'flex', gap: 2.5, alignItems: 'center', p: 2.5 }}>
+          <AroDeProgreso
+            porcentaje={v.porcentajeGastado}
+            etiqueta="GASTADO"
+            color={v.libre < 0 ? ACENTO.alerta : ACENTO.gastado}
+          />
+          <Stack spacing={1.75} sx={{ flex: 1, minWidth: 0 }}>
+            <Box>
+              <Typography variant="overline" color="text.disabled" sx={{ display: 'block' }}>Comprometido</Typography>
+              <Typography className="cifras" sx={{ fontWeight: 700, fontSize: '1.6875rem' }}>{pesos(v.total)}</Typography>
+            </Box>
+            <Divider />
+            <Box>
+              <Typography variant="overline" color="text.disabled" sx={{ display: 'block' }}>
+                {v.libre < 0 ? 'Te faltan' : 'Te queda libre'}
               </Typography>
-            )}
-            <Button component={Link} to="/calendario" startIcon={<EventAvailableRounded />} sx={{ mt: 1 }}>
-              Ver el calendario
-            </Button>
+              <Typography
+                className="cifras"
+                sx={{ fontWeight: 700, fontSize: '1.6875rem', color: v.libre < 0 ? 'error.main' : 'primary.main' }}
+              >
+                {pesos(Math.abs(v.libre))}
+              </Typography>
+              {v.libre >= 0 && v.ingreso > 0 && (
+                <Typography variant="caption" color="text.secondary" className="cifras">
+                  {pesos(v.libre / dias)} al día · {dias} días
+                </Typography>
+              )}
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Fijos contra deudas: son dos cosas distintas cuando toca apretar. */}
+      {(fijos > 0 || deudas > 0) && (
+        <Stack direction="row" spacing={1.25} className="sube" style={{ animationDelay: '.14s' }}>
+          <Card sx={{ flex: 1 }}>
+            <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+              <Medidor
+                izquierda="Fijos" derecha={pesos(fijos)} alto={4} retraso={0.5}
+                porcentaje={v.total > 0 ? (fijos / v.total) * 100 : 0}
+                color={ACENTO.gastado}
+              />
+            </CardContent>
+          </Card>
+          <Card sx={{ flex: 1 }}>
+            <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+              <Medidor
+                izquierda="Deudas" derecha={pesos(deudas)} alto={4} retraso={0.58}
+                porcentaje={v.total > 0 ? (deudas / v.total) * 100 : 0}
+                color={ACENTO.alerta}
+              />
+            </CardContent>
+          </Card>
+        </Stack>
+      )}
+
+      {deuda.original > 0 && (
+        <Card className="sube" style={{ animationDelay: '.2s' }}>
+          <CardContent>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline', mb: 1.25 }}>
+              <Typography variant="overline" color="text.disabled">Tu deuda</Typography>
+              <Typography variant="body2" className="cifras" color="text.secondary">
+                {porcentaje((deuda.pagada / deuda.original) * 100)} pagado
+              </Typography>
+            </Stack>
+            <Medidor
+              izquierda={`${pesos(deuda.pagada)} pagado`}
+              derecha={`${pesos(deuda.total)} falta`}
+              porcentaje={(deuda.pagada / deuda.original) * 100}
+              retraso={0.66}
+            />
           </CardContent>
         </Card>
+      )}
 
-        <Stack spacing={2}>
-          <RepartoPorPeriodo datos={datos} />
+      {v.grupos.length === 0 && (
+        <Card className="sube" style={{ animationDelay: '.26s' }}>
+          <CardContent><Typography color="text.secondary">Nada que pagar.</Typography></CardContent>
+        </Card>
+      )}
 
-          {foto.colchonRecomendado > 0 && (
-            <Card>
-              <CardContent>
-                <Typography variant="overline" color="text.secondary">Fondo de emergencia</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, mt: .5 }}>
-                  Lo que necesitas guardado para aguantar {datos.perfil.colchonMeses} meses
-                  sin ingresos, pagando lo mismo que hoy.
-                </Typography>
-                <Medidor
-                  izquierda="Llevas guardado"
-                  derecha={`${pesos(foto.ahorrado)} de ${pesos(foto.colchonRecomendado)}`}
-                  porcentaje={(foto.ahorrado / foto.colchonRecomendado) * 100}
-                  color={foto.ahorrado >= foto.colchonRecomendado ? 'primary' : 'warning'}
-                />
-              </CardContent>
-            </Card>
-          )}
-        </Stack>
-      </Rejilla>
+      {v.grupos.map((g, i) => (
+        <Card key={g.grupo} className="sube" style={{ animationDelay: `${0.26 + i * 0.06}s` }}>
+          <CardContent>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', mb: 2, gap: 2 }}>
+              <Typography variant="overline" color="text.disabled">{TITULO_DE[g.grupo]}</Typography>
+              <Typography variant="overline" className="cifras" sx={{ fontWeight: 700 }}>{pesos(g.subtotal)}</Typography>
+            </Stack>
+            <Stack divider={<Divider />} spacing={2.5}>
+              {g.filas.map((c) => (
+                <FilaDeDeuda key={c.id} nombre={c.nombre} monto={c.monto}
+                  prestamo={c.prestamo} corte={v.corte} />
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
     </Stack>
   )
 }

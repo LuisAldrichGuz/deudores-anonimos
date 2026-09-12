@@ -4,15 +4,10 @@ const PESOS = new Intl.NumberFormat('es-MX', {
   style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
 })
 
-const PESOS_CENTAVOS = new Intl.NumberFormat('es-MX', {
-  style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2,
-})
 
 /** Lo normal: sin centavos. En un presupuesto los centavos son ruido. */
 export const pesos = (n: number) => PESOS.format(redondeaCero(n))
 
-/** Solo donde el centavo importa (intereses de un día, cuotas calculadas). */
-export const pesosConCentavos = (n: number) => PESOS_CENTAVOS.format(redondeaCero(n))
 
 export const porcentaje = (n: number, decimales = 0) =>
   `${n.toLocaleString('es-MX', { minimumFractionDigits: decimales, maximumFractionDigits: decimales })} %`

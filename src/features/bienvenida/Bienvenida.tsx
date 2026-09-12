@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -11,8 +12,8 @@ import Typography from '@mui/material/Typography'
 import LockRounded from '@mui/icons-material/LockRounded'
 
 import { CampoDinero } from '../../shared/ui/CamposNumericos'
+import { BotonCargarArchivo } from '../../shared/ui/BotonCargarArchivo'
 import { useAlmacen } from '../../shared/almacen/Almacen'
-import { DATOS_DE_EJEMPLO } from '../../shared/almacen/ejemplo'
 import type { FrecuenciaIngreso } from '../../shared/almacen/datos'
 import { DATOS_VACIOS } from '../../shared/almacen/datos'
 
@@ -29,6 +30,7 @@ export function Bienvenida() {
   const { reemplazar, cambiar } = useAlmacen()
   const [ingreso, setIngreso] = useState(0)
   const [frecuencia, setFrecuencia] = useState<FrecuenciaIngreso>('quincenal')
+  const [error, setError] = useState('')
 
   const empezar = () => {
     const elegida = FRECUENCIAS.find((f) => f.valor === frecuencia)!
@@ -54,28 +56,18 @@ export function Bienvenida() {
           <Typography variant="h1" sx={{ fontSize: '2.25rem !important', lineHeight: 1.1, mb: 1.5 }}>
             Deudores<br />Anónimos
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Tus tarjetas, tus deudas y tus pagos fijos en un solo lugar, para saber
-            cuánto apartar de cada pago antes de gastártelo.
-          </Typography>
-
-          <Stack direction="row" spacing={1.5} sx={{
-            p: 2, mb: 3, borderRadius: 3,
-            bgcolor: 'primary.contenedor', color: 'primary.sobreContenedor',
-          }}>
-            <LockRounded fontSize="small" sx={{ mt: '2px' }} />
-            <Typography variant="body2">
-              <strong>Anónimos de verdad.</strong> No hay cuenta ni servidor: todo se
-              queda guardado en este dispositivo y puedes descargarlo o borrarlo cuando quieras.
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1, mb: 3 }}>
+            <LockRounded fontSize="small" color="primary" />
+            <Typography variant="body2" color="text.secondary">
+              Sin cuenta y sin servidor: todo se queda en este dispositivo.
             </Typography>
           </Stack>
 
           <Stack spacing={2}>
             <CampoDinero
-              etiqueta="¿Cuánto te cae cada vez que te pagan?"
+              etiqueta="Cuánto te pagan"
               valor={ingreso}
               alCambiar={setIngreso}
-              ayuda="Lo que llega a tu cuenta, ya con los descuentos."
             />
             <TextField
               select label="¿Cada cuándo te pagan?" value={frecuencia}
@@ -93,12 +85,9 @@ export function Bienvenida() {
 
           <Divider sx={{ my: 3 }}>o</Divider>
 
-          <Button fullWidth variant="outlined" onClick={() => reemplazar(DATOS_DE_EJEMPLO)}>
-            Ver la app con datos de ejemplo
-          </Button>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, textAlign: 'center' }}>
-            Números inventados. Se borran con un botón en Ajustes.
-          </Typography>
+          <BotonCargarArchivo texto="Cargar mi JSON" ancho
+            alCargar={reemplazar} alFallar={setError} />
+          {error && <Alert severity="error" sx={{ mt: 2, borderRadius: 3 }}>{error}</Alert>}
         </CardContent>
       </Card>
     </Box>

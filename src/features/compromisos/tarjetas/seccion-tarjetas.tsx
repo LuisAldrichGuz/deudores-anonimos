@@ -4,7 +4,6 @@ import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import CreditCardRounded from '@mui/icons-material/CreditCardRounded'
 import EditRounded from '@mui/icons-material/EditRounded'
@@ -12,7 +11,7 @@ import EditRounded from '@mui/icons-material/EditRounded'
 import type { Tarjeta } from '../../../shared/almacen/datos'
 import { nuevoId } from '../../../shared/almacen/datos'
 import { interesDelMes } from '../../../shared/finanzas/amortizacion'
-import { diasSinIntereses, mejorDiaDeCompra, proximoCorte, proximoLimiteDePago } from '../../../shared/finanzas/compromisos'
+import { diasSinIntereses, proximoCorte, proximoLimiteDePago } from '../../../shared/finanzas/compromisos'
 import { textoFecha } from '../../../shared/finanzas/fechas'
 import { pesos, porcentaje } from '../../../shared/formato/moneda'
 import { Medidor } from '../../../shared/ui/Medidor'
@@ -22,7 +21,6 @@ import type { DefinicionSeccion } from '../SeccionCrud'
 function FichaTarjeta({ item, alEditar }: { item: Tarjeta; alEditar: () => void }) {
   const uso = item.limite > 0 ? (item.saldo / item.limite) * 100 : 0
   const interes = interesDelMes(item.saldo, item.tasaAnual)
-  const mejor = mejorDiaDeCompra(item)
   const dias = diasSinIntereses(item)
 
   return (
@@ -51,33 +49,19 @@ function FichaTarjeta({ item, alEditar }: { item: Tarjeta; alEditar: () => void 
 
           <Stack direction="row" spacing={3} useFlexGap sx={{ flexWrap: 'wrap' }}>
             <Dato titulo="Le abonas" valor={pesos(item.pagoMensual)} />
-            <Dato
-              titulo="Se va en intereses"
-              valor={pesos(interes)}
-              ayuda="Cada mes, antes de bajar un peso del saldo."
-              alerta={item.pagoMensual > 0 && item.pagoMensual <= interes}
-            />
-            <Dato
-              titulo="Si compras hoy"
-              valor={`${dias} días sin intereses`}
-              ayuda={`El mejor día para comprar con esta tarjeta es el ${textoFecha(mejor.dia)}: te daría ${mejor.dias} días para pagarla.`}
-            />
+            <Dato titulo="Intereses" valor={pesos(interes)}
+              alerta={item.pagoMensual > 0 && item.pagoMensual <= interes} />
+            <Dato titulo="Sin intereses" valor={`${dias} días`} />
           </Stack>
 
-          {item.pagoMensual > 0 && item.pagoMensual <= interes && (
-            <Typography variant="body2" color="error.main">
-              Con {pesos(item.pagoMensual)} al mes esta tarjeta no baja nunca: los intereses
-              solos son {pesos(interes)}. Para que empiece a bajar tienes que pasar de ahí.
-            </Typography>
-          )}
         </Stack>
       </CardContent>
     </Card>
   )
 }
 
-function Dato({ titulo, valor, ayuda, alerta }: { titulo: string; valor: string; ayuda?: string; alerta?: boolean }) {
-  const cuerpo = (
+function Dato({ titulo, valor, alerta }: { titulo: string; valor: string; alerta?: boolean }) {
+  return (
     <Stack>
       <Typography variant="caption" color="text.secondary">{titulo}</Typography>
       <Typography className="cifras" sx={{ fontWeight: 500, color: alerta ? 'error.main' : 'text.primary' }}>
@@ -85,7 +69,6 @@ function Dato({ titulo, valor, ayuda, alerta }: { titulo: string; valor: string;
       </Typography>
     </Stack>
   )
-  return ayuda ? <Tooltip title={ayuda} arrow>{cuerpo}</Tooltip> : cuerpo
 }
 
 function FormularioTarjeta({ valor, alCambiar }: {
@@ -101,15 +84,12 @@ function FormularioTarjeta({ valor, alCambiar }: {
       <CampoDinero etiqueta="Límite de la tarjeta" valor={valor.limite}
         alCambiar={(n) => alCambiar((t) => ({ ...t, limite: n }))} />
       <CampoPorcentaje etiqueta="Tasa anual" valor={valor.tasaAnual}
-        ayuda="La que viene en tu estado de cuenta. Si solo tienes el CAT, ese sirve."
         alCambiar={(n) => alCambiar((t) => ({ ...t, tasaAnual: n }))} />
       <CampoDiaDelMes etiqueta="Día de corte" valor={valor.diaCorte}
         alCambiar={(n) => alCambiar((t) => ({ ...t, diaCorte: n }))} />
       <CampoDinero etiqueta="Cuánto le abonas al mes" valor={valor.pagoMensual}
-        ayuda="Lo que piensas pagarle tú, no el mínimo del banco."
         alCambiar={(n) => alCambiar((t) => ({ ...t, pagoMensual: n }))} />
       <TextField label="Días del corte a la fecha límite" type="number" value={valor.diasParaPagar}
-        helperText="En México casi siempre son 20."
         onChange={(e) => alCambiar((t) => ({ ...t, diasParaPagar: Math.max(0, Number(e.target.value) || 0) }))} />
     </>
   )
@@ -118,10 +98,7 @@ function FormularioTarjeta({ valor, alCambiar }: {
 export const SECCION_TARJETAS: DefinicionSeccion<Tarjeta> = {
   singular: 'tarjeta',
   Icono: CreditCardRounded,
-  vacio: {
-    titulo: 'Sin tarjetas',
-    texto: 'Agrega tus tarjetas de crédito con su día de corte para saber cuándo te toca pagar y cuántos días sin intereses te dan.',
-  },
+  vacio: { titulo: 'Sin tarjetas' },
   nuevo: () => ({
     id: nuevoId(), nombre: '', limite: 0, saldo: 0, tasaAnual: 0,
     diaCorte: 1, diasParaPagar: 20, pagoMensual: 0,

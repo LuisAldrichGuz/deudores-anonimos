@@ -115,10 +115,11 @@ noche.
 
 ## 10. Cada dependencia se justifica, y se quita cuando sobra
 
-El calendario está escrito a mano —unas 100 líneas— porque los componentes de
-calendario de las librerías admiten **un** marcador por día, y aquí un día puede
-tener un corte, un pago de tarjeta y la renta. Escribirlo quitó dos dependencias
-(`@mui/x-date-pickers` y `dayjs`) y dio el resultado que hacía falta.
+Las barras y los aros están escritos a mano —SVG y CSS, unas 150 líneas— porque
+ninguna librería de gráficas dibuja lo que hacía falta: una barra por mes partida a
+la mitad cuando se paga por quincena, con el ancho proporcional a los pagos que caen
+en cada mes. Escribirlos quitó `@mui/x-charts` del paquete y bajó la precarga de la
+app a menos de la mitad.
 
 Al revés también: el service worker **no** está escrito a mano, porque los archivos
 que emite Vite llevan un hash en el nombre y ninguna lista escrita a mano puede

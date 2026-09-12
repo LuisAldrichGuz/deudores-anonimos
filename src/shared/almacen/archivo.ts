@@ -1,7 +1,11 @@
-import type { Datos } from '../../shared/almacen/datos'
-import { leerDatos } from '../../shared/almacen/datos'
+import type { Datos } from './datos'
+import { leerDatos } from './datos'
 
 /* Bajar y subir el archivo con todo lo tuyo.
+
+   Vive en `shared/` y no dentro de Ajustes porque lo usan DOS pantallas: la de
+   ajustes y la de bienvenida —que es donde de verdad hace falta, cuando
+   todavía no hay nada y lo que quieres es traerte tus datos de otro lado.
 
    Es la contraparte de no tener servidor: si la app no guarda nada de nadie,
    tiene que ser MUY fácil llevarte tus datos. El formato es el mismo objeto

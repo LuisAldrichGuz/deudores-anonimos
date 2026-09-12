@@ -7,14 +7,11 @@ import { Marco } from './Marco'
 import { useAlmacen } from '../shared/almacen/Almacen'
 import { Bienvenida } from '../features/bienvenida/Bienvenida'
 
-/* Cada pantalla en su propio trozo. La de «Plan» se lleva la librería de
-   gráficas, que pesa más que el resto de la app junta: cargarla en el arranque
-   retrasaría la portada por algo que quizá nadie abra. */
+/* Cada pantalla en su propio trozo: la de editar no se descarga hasta que
+   alguien la abre, y quien solo entra a mirar sus números no la paga. */
 const PantallaResumen = lazy(() => import('../features/resumen/PantallaResumen'))
-const PantallaCalendario = lazy(() => import('../features/calendario/PantallaCalendario'))
 const PantallaPagos = lazy(() => import('../features/compromisos/PantallaPagos'))
-const PantallaPlan = lazy(() => import('../features/plan/PantallaPlan'))
-const PantallaAjustes = lazy(() => import('../features/ajustes/PantallaAjustes'))
+const PantallaEstadisticas = lazy(() => import('../features/estadisticas/PantallaEstadisticas'))
 
 export function App() {
   const { listo, primeraVez } = useAlmacen()
@@ -29,12 +26,10 @@ export function App() {
       <Suspense fallback={<Centrado><CircularProgress /></Centrado>}>
         <Routes>
           <Route path="/" element={<PantallaResumen />} />
-          <Route path="/calendario" element={<PantallaCalendario />} />
           <Route path="/pagos" element={<PantallaPagos />} />
-          <Route path="/plan" element={<PantallaPlan />} />
-          <Route path="/ajustes" element={<PantallaAjustes />} />
-          {/* Cualquier otra dirección cae en la portada: es una app de cinco
-              pantallas, un «no encontrado» aquí solo sería un callejón. */}
+          <Route path="/stats" element={<PantallaEstadisticas />} />
+          {/* Cualquier otra dirección cae en la portada: son tres pantallas, un
+              «no encontrado» aquí solo sería un callejón. */}
           <Route path="*" element={<PantallaResumen />} />
         </Routes>
       </Suspense>

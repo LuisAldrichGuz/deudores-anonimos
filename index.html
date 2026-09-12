@@ -7,9 +7,15 @@
     <meta name="description" content="Organiza tus deudas, tarjetas y pagos fijos. Todo se queda en tu navegador: aquí nadie sabe tu nombre." />
     <link rel="icon" href="/deudas/icono.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/deudas/icons/icon-192.png" />
-    <meta name="theme-color" content="#1b6b50" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0d1f19" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#15171A" />
+    <!-- Para que se instale igual en iOS: Safari no lee el manifiesto para
+         esto, necesita sus propias metas. Sin `apple-mobile-web-app-capable`
+         la app abre dentro de Safari con su barra encima, aunque el icono ya
+         esté en la pantalla de inicio. -->
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Deudores" />
   </head>
   <body>
     <div id="root"></div>

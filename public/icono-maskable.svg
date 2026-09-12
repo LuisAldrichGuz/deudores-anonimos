@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Deudores Anónimos">
-  <!-- Sin esquinas y con el dibujo dentro del 60 % central: Android recorta
-       este icono con la forma que tenga el sistema (círculo, gota, cuadrado). -->
-  <rect width="512" height="512" fill="#1b6b50"/>
+  <!-- Sin esquinas y con el dibujo dentro del 62 % central: Android recorta
+       este icono con la forma que tenga el sistema. -->
+  <rect width="512" height="512" fill="#15171A"/>
   <g transform="translate(256 256) scale(0.62) translate(-256 -256)">
-    <rect x="96"  y="140" width="72" height="232" rx="36" fill="#a7f2d0"/>
-    <rect x="220" y="196" width="72" height="176" rx="36" fill="#7fdcb4"/>
-    <rect x="344" y="256" width="72" height="116" rx="36" fill="#ffffff"/>
+    <rect x="96"  y="140" width="72" height="232" rx="36" fill="#89A88E"/>
+    <rect x="220" y="196" width="72" height="176" rx="36" fill="#A0A27E"/>
+    <rect x="344" y="256" width="72" height="116" rx="36" fill="#B39A7D"/>
   </g>
 </svg>
