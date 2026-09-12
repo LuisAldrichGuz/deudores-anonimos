@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography'
 import InsightsRounded from '@mui/icons-material/InsightsRounded'
 
 import { useAlmacen } from '../../shared/almacen/Almacen'
-import { resumenDeDeuda } from '../../shared/finanzas/amortizacion'
+import { historicoDeDeuda, resumenDeDeuda } from '../../shared/finanzas/amortizacion'
 import {
   fechaDeLibertad, pagosHechos, proximasEnCaer, proyeccionMensual, repartoDeDeuda,
 } from '../../shared/finanzas/estadisticas'
@@ -40,6 +40,7 @@ export default function PantallaEstadisticas() {
     const delMes = totalDe(eventosEnRango(datos, mes.inicio, mes.fin).filter(esSalida))
     const ingresoMes = ingresoEnVentana(datos.perfil, mes)
     const deuda = resumenDeDeuda(datos, ref)
+    const historico = historicoDeDeuda(datos, ref)
     const pagoDeudaMensual = datos.prestamos
       .filter((p) => saldoDe(p, ref) > 0)
       .reduce((t, p) => t + p.pagoMensual, 0)
@@ -49,7 +50,7 @@ export default function PantallaEstadisticas() {
     const reparto = repartoDeDeuda(datos, ref)
 
     return {
-      delMes, ingresoMes, deuda, pagoDeudaMensual, fijoMensual, libertad, proyeccion, reparto,
+      delMes, ingresoMes, deuda, historico, pagoDeudaMensual, fijoMensual, libertad, proyeccion, reparto,
       pagos: pagosHechos(datos, ref),
       proximas: proximasEnCaer(datos, ref).slice(0, 4),
       activas: datos.prestamos.filter((p) => saldoDe(p, ref) > 0).length,
@@ -138,8 +139,8 @@ export default function PantallaEstadisticas() {
           pie="renta y servicios"
           barra={s.ingresoMes > 0 ? (s.fijoMensual / s.ingresoMes) * 100 : 0}
           color={ACENTO.libre} />
-        <Dato titulo="Pagado en total" valor={pesos(s.deuda.pagada)} color={ACENTO.libre}
-          pie={`de ${pesos(s.deuda.original)}`} />
+        <Dato titulo="Pagado desde siempre" valor={pesos(s.historico.pagada)} color={ACENTO.libre}
+          pie={`de ${pesos(s.historico.original)} en ${datos.prestamos.length} deudas`} />
         <Dato titulo="Ya liquidadas" valor={String(s.liquidadas)} pie={`quedan ${s.activas} activas`} />
         <Dato titulo="Pagos hechos" valor={`${s.pagos.hechos} / ${s.pagos.totales}`}
           pie={`faltan ${s.pagos.restantes}`} />
