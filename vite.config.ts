@@ -66,5 +66,15 @@ export default defineConfig({
     // Avisa si un trozo se dispara de tamaño. El presupuesto es a propósito
     // bajo: es una app que se usa desde el móvil y con mala señal.
     chunkSizeWarningLimit: 350,
+
+    // ⚠️ Las fuentes NUNCA en línea. Vite mete como `data:` todo asset menor a
+    // 4 KB, y los subconjuntos chicos de una tipografía variable caen ahí —
+    // pero la CSP del sitio declara `font-src 'self'`, que no admite `data:`,
+    // así que esa cara se bloquea y el texto sale con la de respaldo. No hay
+    // error visible: solo una tipografía que no es la tuya.
+    //
+    // Se arregla aquí y no relajando la CSP a propósito: un archivo aparte se
+    // cachea un año por su hash, y la cabecera sigue siendo la estricta.
+    assetsInlineLimit: (ruta) => (ruta.endsWith('.woff2') || ruta.endsWith('.woff') ? false : undefined),
   },
 })
